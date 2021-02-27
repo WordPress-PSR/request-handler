@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<ruleset>
+    <arg name="basepath" value="."/>
+    <arg name="extensions" value="php"/>
+    <arg name="parallel" value="80"/>
+    <arg name="cache" value=".phpcs-cache"/>
+    <arg name="colors"/>
+
+    <!-- Configs -->
+    <config name="minimum_supported_wp_version" value="4.7" />
+    <config name="testVersion" value="7.2-" />
+
+    <!-- Rules -->
+    <rule ref="WordPress-Core" />
+
+    <rule ref="PHPCompatibility">
+        <exclude-pattern>tests/</exclude-pattern>
+    </rule>
+</ruleset>

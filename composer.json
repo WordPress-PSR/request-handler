@@ -1,0 +1,68 @@
+{
+  "name": "tgc/wordpres-psr-request-handler",
+  "type": "library",
+  "description": "A PSR-15 server request handler for WordPress.",
+  "keywords": [
+    "middleware",
+    "psr-7",
+    "psr-15",
+    "WordPress"
+  ],
+  "homepage": "https://github.com/superdav42/wordpress-psr-request-handler",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "David Stone",
+      "homepage": "https://github.com/superdav42"
+    }
+  ],
+  "require": {
+    "php": ">=7.1",
+    "dflydev/fig-cookies": "^3.0",
+    "psr/http-message": "~1.0",
+    "psr/http-server-handler": "~1.0",
+    "psr/http-server-middleware": "^1.0",
+    "psr/http-factory": "^1.0"
+  },
+  "require-dev": {
+    "dealerdirect/phpcodesniffer-composer-installer": "^0.7.0",
+    "friendsofphp/php-cs-fixer": "^2.16",
+    "johnpbloch/wordpress": "5.*",
+    "laminas/laminas-diactoros": "~2.2",
+    "nyholm/psr7": "^1.4",
+    "phpstan/phpstan": "^0.12.14",
+    "phpunit/phpunit": "~7.0",
+    "roave/security-advisories": "dev-master",
+    "vimeo/psalm": "^3.9",
+    "wp-coding-standards/wpcs": "^2.3.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Tgc\\WordPressPsr\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tgc\\WordPressPsr\\": "tests/"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "provide": {
+    "psr/http-server-handler-implementation": "1.0"
+  },
+  "scripts": {
+    "test": [
+      "php-cs-fixer fix --verbose --dry-run",
+      "phpcs",
+      "phpstan analyse",
+      "psalm",
+      "phpunit"
+    ],
+    "fix": [
+      "php-cs-fixer fix --verbose",
+      "phpcbf"
+    ]
+  }
+}
