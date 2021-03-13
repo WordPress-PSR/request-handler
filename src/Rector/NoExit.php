@@ -49,6 +49,6 @@ CODE_SAMPLE
             return null;
         }
 
-        return new Node\Expr\New_(new Name('\Tgc\WordPressPsr\EarlyReturnException'));
+        return new Node\Expr\Throw_( new Node\Expr\New_(new Name('\Tgc\WordPressPsr\EarlyReturnException') ) );
     }
 }

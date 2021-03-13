@@ -46,7 +46,6 @@ CODE_SAMPLE
 			return null;
 		}
 
-		return new Node\Expr\StaticCall( new Node\Name('\Tgc\WordPressPsr\RequestHandler'), 'addHeader');
+		return new Node\Expr\StaticCall( new Node\Name('\Tgc\WordPressPsr\RequestHandler'), 'addHeader', $node->args );
 	}
-
 }
