@@ -2,9 +2,6 @@
 
 namespace Tgc\WordPressPsr;
 
-use Dflydev\FigCookies\Modifier\SameSite;
-use Dflydev\FigCookies\SetCookie;
-use Dflydev\FigCookies\SetCookies;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamFactoryInterface;
@@ -14,9 +11,9 @@ use Tgc\WordPressPsr\Psr7\SimpleStream;
 
 class RequestHandler implements RequestHandlerInterface {
 
-	protected $wordpress_path;
+	protected string $wordpress_path;
 
-	protected $globals = array(
+	protected array $globals = array(
 		// major
 		'wp',
 		'wp_the_query',
@@ -60,24 +57,15 @@ class RequestHandler implements RequestHandlerInterface {
 		'wp_customize',
 	);
 
-	protected $default_filters = array();
+	protected array $default_filters = array();
 
-	protected $actions_after_bootstrap = array();
+	protected array $actions_after_bootstrap = array();
 
-	static protected $headers = array();
+	protected ResponseFactoryInterface $response_factory;
 
-	/**
-	 * @var SetCookies
-	 */
-	static protected $cookies;
+	protected StreamFactoryInterface $stream_factory;
 
-	static protected $status_code = 200;
-
-	protected $response_factory;
-
-	protected $stream_factory;
-
-	protected $bootstrapped = false;
+	protected bool $bootstrapped = false;
 
 	public function __construct(
 		$wordpress_path,
@@ -91,29 +79,28 @@ class RequestHandler implements RequestHandlerInterface {
 
 	public function bootstrap() {
 		if ( $this->bootstrapped ) {
-			return;
+			return $this->bootstrapped;
 		}
 		global $wp_filter, $wp_actions;
-		define( 'WPMU_PLUGIN_DIR', __DIR__ . '/mu-plugins' );
+//		define( 'WPMU_PLUGIN_DIR', __DIR__ . '/mu-plugins' );
 		//      $_SERVER['HTTP_HOST'] = 'localhost';
 		$_SERVER['SERVER_NAME'] = gethostname();
 //		define( 'WP_USE_THEMES', true );
 		// Load the WordPress library
-		require_once $this->wordpress_path . '/wp-load.php';
-//		require_once $this->wordpress_path . '/wp-includes/plugin.php';
-//		require __DIR__ . '/mu-plugins/fix-wp-die.php';
+		require $this->wordpress_path . '/wp-load.php';
+		if ( ! isset( $GLOBALS['wp'] ) ) {
+			return false; // Bootstrap failed.
+		}
 
 		$this->default_filters         = $wp_filter;
 		$this->actions_after_bootstrap = $wp_actions;
-		$this->bootstrapped = true;
+		return $this->bootstrapped     = true;
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
 	public function handle( ServerRequestInterface $request ) : ResponseInterface {
-		$GLOBALS['swooleBridge'] = $this;
-		self::$cookies           = new SetCookies();
 		$this->setGlobals( $request );
 		ob_start();
 
@@ -127,51 +114,23 @@ class RequestHandler implements RequestHandlerInterface {
 		}
 
 		$content  = ob_get_clean();
-		$headers  = $this->getHeadersToSend();
-		$response = $this->response_factory->createResponse( self::$status_code )
+		$headers  = Headers::get_headers();
+		$response = $this->response_factory->createResponse( Headers::get_status_code() )
 			->withBody( new SimpleStream( $content ) );
-//		$response->getBody()->write( $content);
 
 		foreach ( $headers as $header => $header_value ) {
 			$response = $response->withHeader( $header, $header_value );
 		}
-		$response = self::$cookies->renderIntoSetCookieHeader( $response );
+		$response = Headers::get_cookies()->renderIntoSetCookieHeader( $response );
 
 		$this->cleanUpWordPress();
 		return $response;
 	}
-	public static function addHeader( $header, $value, $extra = null ) {
-		self::$headers[ $header ] = $value;
-	}
-
-	public static function removeHeader( $header ) {
-		unset( self::$headers[ $header ] );
-	}
-
-	public static function setCookie( $cookie_name, $value, $expires_or_options = 0, $path = '', $domain = '', $secure = false, $httponly = false ): bool {
-		self::$cookies = self::$cookies->with(
-			SetCookie::create( $cookie_name )
-				->withValue( $value )
-				->withExpires( $expires_or_options )
-				->withPath( $path )
-				->withDomain( $domain )
-				->withSecure( $secure )
-				->withHttpOnly( $httponly )
-				->withSameSite( SameSite::fromString( 'Lax' ) ) // https://github.com/chubbyphp/chubbyphp-swoole-request-handler/issues/3
-		);
-		return true;
-	}
-
-	public static function setStatusCode( int $code ) {
-		self::$status_code = $code;
-	}
-
-	protected static function getHeadersToSend(): array {
-		return self::$headers;
-	}
 
 	protected function cleanUpWordPress() {
 		global $wp, $wp_actions, $wp_filter, $wp_current_filter;
+
+		Headers::reset();
 		if ( function_exists( 'wp_cache_flush' ) ) {
 			wp_cache_flush();
 		}
@@ -181,8 +140,6 @@ class RequestHandler implements RequestHandlerInterface {
 		$wp_actions        = $this->actions_after_bootstrap;
 		$wp_filter         = $this->default_filters;
 		$wp_current_filter = array();
-		self::$headers     = array();
-		self::$status_code = 200;
 		$user_globals      = array( 'user_login', 'userdata', 'user_level', 'user_ID', 'user_email', 'user_url', 'user_identity' );
 		foreach ( $user_globals as $user_global ) {
 			unset( $GLOBALS[ $user_global ] );
@@ -233,7 +190,12 @@ class RequestHandler implements RequestHandlerInterface {
 			if( ! defined( 'WP_USE_THEMES' ) ) {
 				define( 'WP_USE_THEMES', true );
 			}
-			$this->bootstrap();
+			if ( ! $this->bootstrap() ) {
+				return; // WP not setup yet. wp-config.php probably doesn't exist.
+			}
+			if ( ! isset( $GLOBALS['wp'] ) ) {
+				return; // WP not setup yet. wp-config.php probably doesn't exist.
+			}
 			$GLOBALS['wp']->init();
 			// Set up the WordPress query.
 			\wp();
@@ -241,18 +203,17 @@ class RequestHandler implements RequestHandlerInterface {
 			// Load the theme template.
 			require ABSPATH . WPINC . '/template-loader.php';
 
-//			require $this->wordpress_path . '/index.php';
 		} elseif ( $is_php_file_request ) {
-			require $this->wordpress_path . $_SERVER['PHP_SELF'];
-			if ( 'wp-login.php' === $_SERVER['PHP_SELF'] ) {
-				$secure = ( 'https' === parse_url( wp_login_url(), PHP_URL_SCHEME ) );
-				self::setcookie( TEST_COOKIE, 'WP Cookie check', 0, COOKIEPATH, COOKIE_DOMAIN, $secure );
-				if ( SITECOOKIEPATH !== COOKIEPATH ) {
-					self::setcookie( TEST_COOKIE, 'WP Cookie check', 0, SITECOOKIEPATH, COOKIE_DOMAIN, $secure );
-				}
+			if ( file_exists( $this->wordpress_path . $_SERVER['PHP_SELF'] ) ) {
+				require $this->wordpress_path . $_SERVER['PHP_SELF'];
 			}
 		} else {
 			require $this->wordpress_path . $_SERVER['PHP_SELF'] . 'index.php';
 		}
 	}
+}
+
+function require_file($fileIdentifier, $file)
+{
+	require $file;
 }
