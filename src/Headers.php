@@ -4,7 +4,6 @@ namespace Tgc\WordPressPsr;
 
 use Dflydev\FigCookies\SetCookie;
 use Dflydev\FigCookies\SetCookies;
-use Nyholm\Psr7\MessageTrait;
 
 class Headers {
 
@@ -16,7 +15,7 @@ class Headers {
 
 	static public function add_header( $header_string, $replace = true, $status_code = 0 ) {
 		$header = strstr( $header_string, ':', true );
-		$value = substr( $header_string, strlen( $header ) + 1 );
+		$value  = substr( $header_string, strlen( $header ) + 1 );
 
 		if ( false === $replace && isset( self::$headers[ $header ] ) ) {
 			return;
@@ -25,7 +24,7 @@ class Headers {
 			self::$status_code = 302;
 		}
 
-		if ( self::validateHeader( $header, $value ) ) {
+		if ( self::validate_header( $header, $value ) ) {
 			self::$headers[ $header ] = $value;
 		}
 		if ( $status_code ) {
@@ -55,12 +54,12 @@ class Headers {
 		}
 		self::$cookies = self::$cookies->with(
 			SetCookie::create( $cookie_name )
-			         ->withValue( $value )
-			         ->withExpires( $expires_or_options )
-			         ->withPath( $path )
-			         ->withDomain( $domain )
-			         ->withSecure( $secure )
-			         ->withHttpOnly( $httponly )
+				->withValue( $value )
+				->withExpires( $expires_or_options )
+				->withPath( $path )
+				->withDomain( $domain )
+				->withSecure( $secure )
+				->withHttpOnly( $httponly )
 		);
 		return true;
 	}
@@ -70,7 +69,7 @@ class Headers {
 	}
 
 	public static function reset() {
-		self::$cookies = new SetCookies();
+		self::$cookies     = new SetCookies();
 		self::$headers     = array();
 		self::$status_code = 200;
 	}
@@ -83,14 +82,13 @@ class Headers {
 	}
 
 
-	private static function validateHeader($header, $values): bool
-	{
-		if (!\is_string($header) || 1 !== \preg_match("@^[!#$%&'*+.^_`|~0-9A-Za-z-]+$@", $header)) {
+	private static function validate_header( $header, $values ): bool {
+		if ( ! \is_string( $header ) || 1 !== \preg_match( "@^[!#$%&'*+.^_`|~0-9A-Za-z-]+$@", $header ) ) {
 			return false;
 		}
 
 		// This is simple, just one value.
-		if ((!\is_numeric($values) && !\is_string($values)) || 1 !== \preg_match("@^[ \t\x21-\x7E\x80-\xFF]*$@", (string) $values)) {
+		if ( ( ! \is_numeric( $values ) && ! \is_string( $values ) ) || 1 !== \preg_match( "@^[ \t\x21-\x7E\x80-\xFF]*$@", (string) $values ) ) {
 			return false;
 		}
 		return true;

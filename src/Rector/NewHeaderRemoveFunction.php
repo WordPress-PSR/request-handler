@@ -9,7 +9,7 @@ use Rector\Core\Rector\AbstractRector;
 use Symplify\RuleDocGenerator\ValueObject\CodeSample\CodeSample;
 use Symplify\RuleDocGenerator\ValueObject\RuleDefinition;
 
-class NewHeaderFunction extends AbstractRector
+class NewHeaderRemoveFunction extends AbstractRector
 {
 	public function getRuleDefinition(): RuleDefinition
 	{
@@ -18,11 +18,11 @@ class NewHeaderFunction extends AbstractRector
 			[
 				new CodeSample(
 					<<<'CODE_SAMPLE'
-header('header'');
+header_remove('header'');
 CODE_SAMPLE
 					,
 					<<<'CODE_SAMPLE'
-wp_header('header');
+wp_header_remove('header');
 CODE_SAMPLE
 				),
 
@@ -42,10 +42,10 @@ CODE_SAMPLE
 	 */
 	public function refactor(Node $node): ?Node
 	{
-		if ( ! $this->isName( $node, 'header' ) ) {
+		if ( ! $this->isName( $node, 'header_remove' ) ) {
 			return null;
 		}
 
-		return new Node\Expr\FuncCall( new Node\Name('wp_header'), $node->args );
+		return new Node\Expr\FuncCall( new Node\Name('wp_header_remove'), $node->args );
 	}
 }

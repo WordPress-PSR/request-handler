@@ -11,6 +11,11 @@ use Tgc\WordPressPsr\Psr7\SimpleStream;
 
 class RequestHandler implements RequestHandlerInterface {
 
+	const ENDPOINT_OVERRIDES = array(
+		'/wp-admin/load-scripts.php' => __DIR__ . '/endpoint-overrides/wp-admin/load-scripts.php', // These rely on noop.php which is hard to avoid.
+		'/wp-admin/load-styles.php'  => __DIR__ . '/endpoint-overrides/wp-admin/load-styles.php',
+	);
+
 	protected string $wordpress_path;
 
 	protected array $globals = array(
@@ -82,10 +87,10 @@ class RequestHandler implements RequestHandlerInterface {
 			return $this->bootstrapped;
 		}
 		global $wp_filter, $wp_actions;
-//		define( 'WPMU_PLUGIN_DIR', __DIR__ . '/mu-plugins' );
+		define( 'WPMU_PLUGIN_DIR', __DIR__ . '/mu-plugins' );
 		//      $_SERVER['HTTP_HOST'] = 'localhost';
 		$_SERVER['SERVER_NAME'] = gethostname();
-//		define( 'WP_USE_THEMES', true );
+		//      define( 'WP_USE_THEMES', true );
 		// Load the WordPress library
 		require $this->wordpress_path . '/wp-load.php';
 		if ( ! isset( $GLOBALS['wp'] ) ) {
@@ -106,7 +111,7 @@ class RequestHandler implements RequestHandlerInterface {
 
 		try {
 			$this->load_wordpress();
-		} catch ( EarlyReturnException $e ) {
+		} catch ( PrematureExitException $e ) {
 			error_log( $e->getMessage() );
 		} catch ( \Swoole\ExitException $e ) {
 			error_log( $e->getMessage() );
@@ -171,23 +176,22 @@ class RequestHandler implements RequestHandlerInterface {
 	/**
 	 * Loads WordPress.
 	 *
-	 * @throws EarlyReturnException
+	 * @throws PrematureExitException
 	 */
 	public function load_wordpress() {
 		// set current user.
-
 
 		foreach ( $this->globals as $globalVariable ) {
 			global ${$globalVariable};
 		}
 
-//		do_action( 'plugins_loaded' );
+		//      do_action( 'plugins_loaded' );
 
 		$is_php_file_request = strpos( $_SERVER['PHP_SELF'], '.php' ) !== false;
 
 		if ( '/' === $_SERVER['PHP_SELF'] || ( ! $is_php_file_request
 			&& ! file_exists( $this->wordpress_path . $_SERVER['PHP_SELF'] . 'index.php' ) ) ) {
-			if( ! defined( 'WP_USE_THEMES' ) ) {
+			if ( ! defined( 'WP_USE_THEMES' ) ) {
 				define( 'WP_USE_THEMES', true );
 			}
 			if ( ! $this->bootstrap() ) {
@@ -204,16 +208,19 @@ class RequestHandler implements RequestHandlerInterface {
 			require ABSPATH . WPINC . '/template-loader.php';
 
 		} elseif ( $is_php_file_request ) {
-			if ( file_exists( $this->wordpress_path . $_SERVER['PHP_SELF'] ) ) {
+			if ( isset( self::ENDPOINT_OVERRIDES[ $_SERVER['PHP_SELF'] ] ) ) {
+				if ( ! $this->bootstrap() ) {
+					return; // WP not setup yet. wp-config.php probably doesn't exist.
+				}
+				$GLOBALS['wp']->init();
+				// Set up the WordPress query.
+				\wp();
+				require self::ENDPOINT_OVERRIDES[ $_SERVER['PHP_SELF'] ];
+			} elseif ( file_exists( $this->wordpress_path . $_SERVER['PHP_SELF'] ) ) {
 				require $this->wordpress_path . $_SERVER['PHP_SELF'];
 			}
 		} else {
 			require $this->wordpress_path . $_SERVER['PHP_SELF'] . 'index.php';
 		}
 	}
-}
-
-function require_file($fileIdentifier, $file)
-{
-	require $file;
 }

@@ -6,16 +6,14 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class BucketWordPressRoutes {
 
-	protected $workers = [];
+	protected $workers = array();
 
-	protected $special_routes = [
-		'/wp-cron.php' => 0,
-		'/wp-admin/load-scripts.php' => 1,
-		'/wp-admin/load-styles.php' => 1,
-		'/wp-admin/customizer.php' => 2,
-		'/wp-admin/admin-ajax.php' => 3,
-		'/xmlrpc.php' => 4,
-	];
+	protected $special_routes = array(
+		'/wp-cron.php'             => 0,
+		'/wp-admin/customizer.php' => 1,
+		'/wp-admin/admin-ajax.php' => 2,
+		'/xmlrpc.php'              => 3,
+	);
 
 	public function addWorker( $identifier ) {
 		$this->workers[] = $identifier;
@@ -23,11 +21,11 @@ class BucketWordPressRoutes {
 
 	public function getWorkerForRequest( ServerRequestInterface $request ) {
 		$uri = $request->getUri();
-		if ( str_starts_with( $uri, 'wp-cron.php') ) {
+		if ( str_starts_with( $uri, 'wp-cron.php' ) ) {
 			$i = 0;
 		} elseif ( str_starts_with( $uri, '/wp-admin/network' ) ) {
 			$i = 5;
-		} elseif( str_starts_with( $uri, '/wp-admin' ) ) {
+		} elseif ( str_starts_with( $uri, '/wp-admin' ) ) {
 			$i = 6;
 		} else {
 			$i = rand( 7, count( $this->workers ) - 1 );
