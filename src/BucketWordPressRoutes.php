@@ -21,14 +21,16 @@ class BucketWordPressRoutes {
 
 	public function getWorkerForRequest( ServerRequestInterface $request ) {
 		$uri = $request->getUri();
-		if ( str_starts_with( $uri, 'wp-cron.php' ) ) {
-			$i = 0;
+		$path = parse_url( $uri, PHP_URL_PATH );
+
+		if ( isset( $this->special_routes[ $path ] ) ) {
+			$i = $this->special_routes[ $path ];
 		} elseif ( str_starts_with( $uri, '/wp-admin/network' ) ) {
-			$i = 5;
+			$i = 4;
 		} elseif ( str_starts_with( $uri, '/wp-admin' ) ) {
-			$i = 6;
+			$i = 5;
 		} else {
-			$i = rand( 7, count( $this->workers ) - 1 );
+			$i = rand( 6, count( $this->workers ) - 1 );
 		}
 
 		return $this->workers[ $i ];
