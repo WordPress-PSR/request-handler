@@ -74,6 +74,136 @@ class RequestHandler implements RequestHandlerInterface {
 		'post',
 		'editor_styles',
 		'wp_meta_boxes',
+		// rewrite
+		'wp_rewrite',
+		// version.php
+		'wp_version',
+		'wp_db_version',
+		'tinymce_version',
+		'required_php_version',
+		'required_mysql_version',
+	);
+
+	/**
+	 * List of admin endpoints and the correct file to perform the request init.
+	 * We are using a map instead of regex for performance reasons and an added security so only php file on this lisk will be included.
+	 * @var array|string[]
+	 */
+	protected array $wp_admin_endpoints_to_bootstrap = array(
+		'/wp-admin/index.php' => '/wp-admin/admin.php',
+		'/wp-admin/about.php' => '/wp-admin/admin.php',
+		'/wp-admin/authorize-application.php' => '/wp-admin/admin.php',
+		'/wp-admin/comment.php' => '/wp-admin/admin.php',
+		'/wp-admin/credits.php' => '/wp-admin/admin.php',
+		'/wp-admin/customize.php' => '/wp-admin/admin.php',
+		'/wp-admin/edit-comments.php' => '/wp-admin/admin.php',
+		'/wp-admin/edit-tags.php' => '/wp-admin/admin.php',
+		'/wp-admin/edit.php' => '/wp-admin/admin.php',
+		'/wp-admin/erase-personal-data.php' => '/wp-admin/admin.php',
+		'/wp-admin/export-personal-data.php' => '/wp-admin/admin.php',
+		'/wp-admin/export.php' => '/wp-admin/admin.php',
+		'/wp-admin/import.php' => '/wp-admin/admin.php',
+		'/wp-admin/freedoms.php' => '/wp-admin/admin.php',
+		'/wp-admin/link-add.php' => '/wp-admin/admin.php',
+		'/wp-admin/link-manager.php' => '/wp-admin/admin.php',
+		'/wp-admin/link.php' => '/wp-admin/admin.php',
+		'/wp-admin/media-new.php' => '/wp-admin/admin.php',
+		'/wp-admin/media-upload.php' => '/wp-admin/admin.php',
+		'/wp-admin/media.php' => '/wp-admin/admin.php',
+		'/wp-admin/ms-admin.php' => '/wp-admin/admin.php',
+		'/wp-admin/ms-delete-site.php' => '/wp-admin/admin.php',
+		'/wp-admin/ms-edit.php' => '/wp-admin/admin.php',
+		'/wp-admin/ms-options.php' => '/wp-admin/admin.php',
+		'/wp-admin/ms-themes.php' => '/wp-admin/admin.php',
+		'/wp-admin/ms-upgrade-network.php' => '/wp-admin/admin.php',
+		'/wp-admin/ms-users.php' => '/wp-admin/admin.php',
+		'/wp-admin/ms-sites.php' => '/wp-admin/admin.php',
+		'/wp-admin/nav-menus.php' => '/wp-admin/admin.php',
+		'/wp-admin/network.php' => '/wp-admin/admin.php',
+		'/wp-admin/options-discussion.php' => '/wp-admin/admin.php',
+		'/wp-admin/options-general.php' => '/wp-admin/admin.php',
+		'/wp-admin/options-media.php' => '/wp-admin/admin.php',
+		'/wp-admin/options-permalink.php' => '/wp-admin/admin.php',
+		'/wp-admin/options-privacy.php' => '/wp-admin/admin.php',
+		'/wp-admin/options-reading.php' => '/wp-admin/admin.php',
+		'/wp-admin/options-writing.php' => '/wp-admin/admin.php',
+		'/wp-admin/options.php' => '/wp-admin/admin.php',
+		'/wp-admin/plugin-editor.php' => '/wp-admin/admin.php',
+		'/wp-admin/plugin-install.php' => '/wp-admin/admin.php',
+		'/wp-admin/plugins.php' => '/wp-admin/admin.php',
+		'/wp-admin/post-new.php' => '/wp-admin/admin.php',
+		'/wp-admin/post.php' => '/wp-admin/admin.php',
+		'/wp-admin/press-this.php' => '/wp-admin/admin.php',
+		'/wp-admin/privacy-policy-guide.php' => '/wp-admin/admin.php',
+		'/wp-admin/privacy.php' => '/wp-admin/admin.php',
+		'/wp-admin/profile.php' => '/wp-admin/admin.php',
+		'/wp-admin/revision.php' => '/wp-admin/admin.php',
+		'/wp-admin/site-health-info.php' => '/wp-admin/admin.php',
+		'/wp-admin/site-health.php' => '/wp-admin/admin.php',
+		'/wp-admin/term.php' => '/wp-admin/admin.php',
+		'/wp-admin/theme-editor.php' => '/wp-admin/admin.php',
+		'/wp-admin/theme-install.php' => '/wp-admin/admin.php',
+		'/wp-admin/themes.php' => '/wp-admin/admin.php',
+		'/wp-admin/tools.php' => '/wp-admin/admin.php',
+		'/wp-admin/update-core.php' => '/wp-admin/admin.php',
+		'/wp-admin/update.php' => '/wp-admin/admin.php',
+		'/wp-admin/upload.php' => '/wp-admin/admin.php',
+		'/wp-admin/user-edit.php' => '/wp-admin/admin.php',
+		'/wp-admin/user-new.php' => '/wp-admin/admin.php',
+		'/wp-admin/users.php' => '/wp-admin/admin.php',
+		'/wp-admin/widgets.php' => '/wp-admin/admin.php',
+		'/wp-admin/user/index.php' => '/wp-admin/user/admin.php',
+		'/wp-admin/user/privacy.php' => '/wp-admin/user/admin.php',
+		'/wp-admin/user/credits.php' => '/wp-admin/user/admin.php',
+		'/wp-admin/user/about.php' => '/wp-admin/user/admin.php',
+		'/wp-admin/user/profile.php' => '/wp-admin/user/admin.php',
+		'/wp-admin/user/freedoms.php' => '/wp-admin/user/admin.php',
+		'/wp-admin/user/user-edit.php' => '/wp-admin/user/admin.php',
+		'/wp-admin/network/site-new.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/settings.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/theme-install.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/site-users.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/site-settings.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/themes.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/site-themes.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/index.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/privacy.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/update.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/theme-editor.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/plugin-install.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/credits.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/site-info.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/edit.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/about.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/upgrade.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/profile.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/freedoms.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/users.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/user-edit.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/user-new.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/sites.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/update-core.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/setup.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/plugin-editor.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/plugins.php' => '/wp-admin/network/admin.php',
+	);
+
+	/**
+	 * @var array|string[]
+	 * Valid url that can be loaded directly. Any php file requests not on this list will 404.
+	 */
+	protected array $wp_special_endpoints = array(
+		'/wp-admin/' => '/wp-admin/index.php',
+		'/wp-admin/admin-ajax.php' => '/wp-admin/admin-ajax.php',
+		'/wp-login.php' => '/wp-login.php',
+		'/wp-activate.php' => '/wp-activate.php',
+		'/wp-comments-post.php' => '/wp-comments-post.php',
+		'/wp-cron.php' => '/wp-cron.php',
+		'/wp-links-opml.php' => '/wp-links-opml.php',
+		'/wp-mail.php' => '/wp-mail.php',
+		'/wp-signup.php' => '/wp-signup.php',
+		'/wp-trackback.php' => '/wp-trackback.php',
+		'/xmlrpc.php' => '/xmlrpc.php',
 	);
 
 	protected static array $filters_after_bootstrap = array();
@@ -101,8 +231,6 @@ class RequestHandler implements RequestHandlerInterface {
 		if ( $this->bootstrapped ) {
 			return $this->bootstrapped;
 		}
-		//      $_SERVER['HTTP_HOST'] = 'localhost';
-		//      define( 'WP_USE_THEMES', true );
 		// Load the WordPress library
 		require $this->wordpress_path . '/wp-load.php';
 		if ( ! isset( $GLOBALS['wp'] ) ) {
@@ -166,6 +294,9 @@ class RequestHandler implements RequestHandlerInterface {
 		} catch ( \Swoole\ExitException $e ) {
 			error_log( $e->getMessage() );
 			throw $e;
+		} catch ( \Exception $e ) {
+			error_log( $e->getMessage() );
+			throw $e;
 		}
 
 		$content  = ob_get_clean();
@@ -199,7 +330,10 @@ class RequestHandler implements RequestHandlerInterface {
 		foreach ( $user_globals as $user_global ) {
 			unset( $GLOBALS[ $user_global ] );
 		}
-
+		/**
+		 * @var string[] $page_globals
+		 * global vars that are different for different pages.
+		 */
 		$page_globals = array(
 			'pagenow',
 			'is_lynx',
@@ -210,17 +344,22 @@ class RequestHandler implements RequestHandlerInterface {
 			'is_apache', 'is_IIS', 'is_iis7', 'is_nginx',
 			'hook_suffix', 'plugin_page', 'typenow', 'taxnow',
 			'current_screen',
+			'post',
+			'post_type',
+			'post_type_object',
+			'title',
+			'wp_did_header',
+			'wp_scripts',
+			'wp_styles',
+			'concatenate_scripts',
+			'wp_meta_boxes',
+			'typenow',
+			'menu',
+			'submenu',
 		);
 		foreach ( $page_globals as $page_global ) {
 			unset( $GLOBALS[ $page_global ] );
 		}
-
-		unset( $GLOBALS['wp_did_header'] );
-		unset( $GLOBALS['wp_scripts'] );
-		unset( $GLOBALS['wp_styles'] );
-		unset( $GLOBALS['concatenate_scripts'] );
-		unset( $GLOBALS['wp_meta_boxes'] );
-		unset( $GLOBALS['typenow'] );
 	}
 
 	protected function set_globals( ServerRequestInterface $request ) {
@@ -258,25 +397,34 @@ class RequestHandler implements RequestHandlerInterface {
 	 */
 	public function load_wordpress() {
 		$this->request_bootstrap();
-		// set current user.
 
 		foreach ( $this->globals as $globalVariable ) {
 			global ${$globalVariable};
 		}
 
-		//      do_action( 'plugins_loaded' );
-
-		$is_php_file_request = strpos( $_SERVER['PHP_SELF'], '.php' ) !== false;
-
-		if ( '/' === $_SERVER['PHP_SELF'] || ( ! $is_php_file_request
-			&& ! file_exists( $this->wordpress_path . $_SERVER['PHP_SELF'] . 'index.php' ) ) ) {
+		if ( isset( self::ENDPOINT_OVERRIDES[ $_SERVER['PHP_SELF'] ] ) ) {
+				if ( ! $this->bootstrap() ) {
+					return; // WP not setup yet. wp-config.php probably doesn't exist.
+				}
+				$GLOBALS['wp']->init();
+				// Set up the WordPress query.
+				\wp();
+				require self::ENDPOINT_OVERRIDES[ $_SERVER['PHP_SELF'] ];
+		} elseif ( isset( $this->wp_admin_endpoints_to_bootstrap[ $_SERVER['PHP_SELF'] ] ) ) {
+			// This file must be required everytime because they are included with `require_once`.
+			require $this->wordpress_path . $this->wp_admin_endpoints_to_bootstrap[ $_SERVER['PHP_SELF'] ];
+			require $this->wordpress_path . $_SERVER['PHP_SELF'];
+		} elseif( isset( $this->wp_special_endpoints[ $_SERVER['PHP_SELF'] ] ) ) {
+			if ( isset( $this->wp_admin_endpoints_to_bootstrap[ $this->wp_special_endpoints[ $_SERVER['PHP_SELF'] ] ] ) ) {
+				// Right now it is only for /wp-admin/ without the index.php.
+				require $this->wordpress_path . $this->wp_admin_endpoints_to_bootstrap[ $this->wp_special_endpoints[ $_SERVER['PHP_SELF'] ] ];
+			}
+			require $this->wordpress_path . $this->wp_special_endpoints[ $_SERVER['PHP_SELF'] ];
+		} else {
 			if ( ! defined( 'WP_USE_THEMES' ) ) {
 				define( 'WP_USE_THEMES', true );
 			}
 			if ( ! $this->bootstrap() ) {
-				return; // WP not setup yet. wp-config.php probably doesn't exist.
-			}
-			if ( ! isset( $GLOBALS['wp'] ) ) {
 				return; // WP not setup yet. wp-config.php probably doesn't exist.
 			}
 			$GLOBALS['wp']->init();
@@ -285,21 +433,6 @@ class RequestHandler implements RequestHandlerInterface {
 
 			// Load the theme template.
 			require ABSPATH . WPINC . '/template-loader.php';
-
-		} elseif ( $is_php_file_request ) {
-			if ( isset( self::ENDPOINT_OVERRIDES[ $_SERVER['PHP_SELF'] ] ) ) {
-				if ( ! $this->bootstrap() ) {
-					return; // WP not setup yet. wp-config.php probably doesn't exist.
-				}
-				$GLOBALS['wp']->init();
-				// Set up the WordPress query.
-				\wp();
-				require self::ENDPOINT_OVERRIDES[ $_SERVER['PHP_SELF'] ];
-			} elseif ( file_exists( $this->wordpress_path . $_SERVER['PHP_SELF'] ) ) {
-				require $this->wordpress_path . $_SERVER['PHP_SELF'];
-			}
-		} else {
-			require $this->wordpress_path . $_SERVER['PHP_SELF'] . 'index.php';
 		}
 		$this->bootstrapped = true;
 	}

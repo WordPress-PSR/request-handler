@@ -15,10 +15,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 return static function ( ContainerConfigurator $container_configurator ): void {
 	// get parameters
 	$parameters = $container_configurator->parameters();
-	//  $parameters->set(Option::SETS, [
-	//      SetList::CODE_QUALITY,
-	//      SetList::PHP_70,SetList::PHP_71, SetList::PHP_72, SetList::PHP_73, SetList::PHP_74, SetList::PHP_80
-	//  ]);
+	  $parameters->set(Option::SETS, [
+	      SetList::CODE_QUALITY,
+	      SetList::PHP_70,
+		  SetList::PHP_71,
+		  SetList::PHP_72,
+		  SetList::PHP_73,
+		  SetList::PHP_74,
+		  SetList::PHP_80
+	  ]);
 	$parameters->set(
 		Option::AUTOLOAD_PATHS,
 		array(
@@ -32,7 +37,8 @@ return static function ( ContainerConfigurator $container_configurator ): void {
 	$services->set( \Tgc\WordPressPsr\Rector\NewHeaderFunction::class );
 	$services->set( \Tgc\WordPressPsr\Rector\NewCookieFunction::class );
 	$services->set( \Tgc\WordPressPsr\Rector\NewHeaderRemoveFunction::class );
-
+//	$services->set( \Rector\CodeQuality\Rector\If_\ExplicitBoolCompareRector::class );
+\Rector\Php70\Rector\ClassMethod\Php4ConstructorRector::class;
 	$parameters->set( Option::IMPORT_DOC_BLOCKS, false );
 	$parameters->set( Option::AUTO_IMPORT_NAMES, true );
 	$parameters->set(
@@ -47,6 +53,7 @@ return static function ( ContainerConfigurator $container_configurator ): void {
 			__DIR__ . '/wordpress/wp-includes/class-wp-simplepie-sanitize-kses.php',
 			__DIR__ . '/wordpress/wp-includes/class-wp-simplepie-file.php',
 			__DIR__ . '/wordpress/wp-includes/class-wp-feed-cache.php',
+			__DIR__ . '/wordpress/wp-admin/includes/noop.php',
 		)
 	);
 

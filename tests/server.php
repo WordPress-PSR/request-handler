@@ -6,18 +6,9 @@ use Laminas\HttpHandlerRunner\RequestHandlerRunner;
 use Tgc\WordPressPsr\Psr17\Psr17Factory;
 use Tgc\WordPressPsr\Psr17\Psr17FactoryProvider;
 
-//$container = require 'config/container.php';
 require __DIR__ .  '/../vendor/autoload.php';
 
 $request_handler = \Tgc\WordPressPsr\RequestHandlerFactory::create( dirname(__DIR__ ). '/wordpress' );
-
-//$runner = new RequestHandlerRunner(
-//    $request_handler,
-//    $container->get(EmitterStack::class),
-//    $container->get('ServerRequestFactory'),
-//    $container->get('ServerRequestErrorResponseGenerator')
-//);
-
 
 $psr17FactoryProvider = new Psr17FactoryProvider();
 
@@ -30,8 +21,4 @@ foreach ($psr17FactoryProvider->getFactories() as $psr17factory) {
 
 $request = $request_creator->createServerRequestFromGlobals();
 $response = $request_handler->handle( $request );
-//var_dump($response);
 (new \Laminas\HttpHandlerRunner\Emitter\SapiEmitter())->emit($response);
-
-
-//$runner->run();

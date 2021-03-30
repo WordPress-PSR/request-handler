@@ -6,8 +6,9 @@ use Tgc\WordPressPsr\PrematureExitException;
 if ( ! defined( 'ABSPATH' ) ) {
 	define( 'ABSPATH', dirname( __DIR__ ) . '/' );
 }
-
-define( 'WPINC', 'wp-includes' );
+if ( ! defined( 'WPINC' ) ) {
+	define( 'WPINC', 'wp-includes' );
+}
 
 $protocol = $_SERVER['SERVER_PROTOCOL'];
 if ( ! in_array( $protocol, array( 'HTTP/1.1', 'HTTP/2', 'HTTP/2.0' ), true ) ) {
@@ -28,9 +29,6 @@ if ( empty( $load ) ) {
 	throw new PrematureExitException();
 }
 
-require_once ABSPATH . WPINC . '/script-loader.php';
-require_once ABSPATH . WPINC . '/version.php';
-
 $expires_offset = 31536000; // 1 year.
 $out            = '';
 
@@ -50,7 +48,7 @@ foreach ( $load as $handle ) {
 	}
 
 	$path = ABSPATH . $wp_scripts->registered[ $handle ]->src;
-	$out .= @file_get_contents( $path ) . "\n";
+	$out .= file_get_contents( $path ) . "\n";
 }
 
 Headers::add_header( "Etag: $wp_version" );
