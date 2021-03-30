@@ -242,9 +242,7 @@ class RequestHandler implements RequestHandlerInterface {
 
 	public static function after_bootstrap() {
 		global $wp_filter, $wp_actions;
-		self::$filters_after_bootstrap = $wp_filter;
-		self::$actions_after_bootstrap = $wp_actions;
-
+		error_log( __METHOD__ );
 		add_action(
 			'wp_exit',
 			function( $message ) {
@@ -278,6 +276,8 @@ class RequestHandler implements RequestHandlerInterface {
 			100,
 			7
 		);
+		self::$filters_after_bootstrap = $wp_filter;
+		self::$actions_after_bootstrap = $wp_actions;
 	}
 
 	/**
@@ -378,7 +378,8 @@ class RequestHandler implements RequestHandlerInterface {
 		$_GET    = $request->getQueryParams() ?: array();
 		$_POST   = $request->getParsedBody() ?: array();
 		$_COOKIE = $request->getCookieParams() ?: array();
-		// Bonus points: parse the request_order ini setting
+		// This is the default order for $_REQUEST.
+		// To maintain max compatibility we could parse the request_order ini setting, but who doesn't use the default?
 		$_REQUEST = $_COOKIE + $_POST + $_GET;
 	}
 
