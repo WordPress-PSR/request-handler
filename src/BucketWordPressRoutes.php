@@ -9,6 +9,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class BucketWordPressRoutes {
 
+	const MIN_REQUIRED_WORKERS = 7;
+
 	protected $workers = array();
 
 	protected $special_routes = array(

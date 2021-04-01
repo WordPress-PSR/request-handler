@@ -242,7 +242,6 @@ class RequestHandler implements RequestHandlerInterface {
 
 	public static function after_bootstrap() {
 		global $wp_filter, $wp_actions;
-		error_log( __METHOD__ );
 		add_action(
 			'wp_exit',
 			function( $message ) {
