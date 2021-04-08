@@ -7,7 +7,7 @@ Installation
 ------------
 
 ```bash
-$> composer require tgc/wordpress-psr-request-handler
+$> composer require wordpress-psr/request-handler
 ```
 
 Overview
