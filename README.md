@@ -23,7 +23,7 @@ Swoole
 
 Using this request handler and combining it with the [chubbyphp-swoole-request-handler](https://github.com/chubbyphp/chubbyphp-swoole-request-handler)
 it is possible to run WordPress in the persistent, high performance, event-driven, asynchronous swoole http server.
-See the [wordpress-psr-swoole project](https://github.com/superdav42/wordpress-psr/swoole) for more details.
+See the [WordPress PSR Swoole project](https://github.com/WordPress-PSR/swoole) for more details.
 In addition to Swoole since this request handler is using the psr-15 standard other event driven libraries such as [react](https://reactphp.org/) or [amp](https://amphp.org/http-server/classes/middleware) should work as well.
 
 Example Usage
