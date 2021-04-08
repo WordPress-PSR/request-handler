@@ -1,6 +1,6 @@
 <?php
 
-namespace Tgc\WordPressPsr\Rector;
+namespace WordPressPsr\Rector;
 
 use PhpParser\Node;
 

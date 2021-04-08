@@ -8,13 +8,13 @@
 
 declare(strict_types=1);
 
-namespace Tgc\WordPressPsr\Psr17;
+namespace WordPressPsr\Psr17;
 
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use RuntimeException;
-use Tgc\WordPressPsr\Psr17\Psr17FactoryInterface;
-use Tgc\WordPressPsr\Psr17\ServerRequestCreatorInterface;
+use WordPressPsr\Psr17\Psr17FactoryInterface;
+use WordPressPsr\Psr17\ServerRequestCreatorInterface;
 
 use function class_exists;
 use function get_called_class;

@@ -33,10 +33,10 @@ return static function ( ContainerConfigurator $container_configurator ): void {
 	// get services (needed for register a single rule)
 	$services = $container_configurator->services();
 	// register a single rule
-	$services->set( \Tgc\WordPressPsr\Rector\NoExit::class );
-	$services->set( \Tgc\WordPressPsr\Rector\NewHeaderFunction::class );
-	$services->set( \Tgc\WordPressPsr\Rector\NewCookieFunction::class );
-	$services->set( \Tgc\WordPressPsr\Rector\NewHeaderRemoveFunction::class );
+	$services->set( \WordPressPsr\Rector\NoExit::class );
+	$services->set( \WordPressPsr\Rector\NewHeaderFunction::class );
+	$services->set( \WordPressPsr\Rector\NewCookieFunction::class );
+	$services->set( \WordPressPsr\Rector\NewHeaderRemoveFunction::class );
 //	$services->set( \Rector\CodeQuality\Rector\If_\ExplicitBoolCompareRector::class );
 \Rector\Php70\Rector\ClassMethod\Php4ConstructorRector::class;
 	$parameters->set( Option::IMPORT_DOC_BLOCKS, false );

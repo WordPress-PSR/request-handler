@@ -1,6 +1,6 @@
 <?php
 
-namespace Tgc\WordPressPsr;
+namespace WordPressPsr;
 
 use Dflydev\FigCookies\SetCookie;
 use Dflydev\FigCookies\SetCookies;

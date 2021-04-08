@@ -1,12 +1,12 @@
 <?php
 
-namespace Tgc\WordPressPsr;
+namespace WordPressPsr;
 
 use http\Exception\RuntimeException;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
-use Tgc\WordPressPsr\Psr17\Psr17Factory;
-use Tgc\WordPressPsr\Psr17\Psr17FactoryProvider;
+use WordPressPsr\Psr17\Psr17Factory;
+use WordPressPsr\Psr17\Psr17FactoryProvider;
 
 class RequestHandlerFactory {
 	/**

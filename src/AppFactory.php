@@ -7,21 +7,21 @@
  */
 declare(strict_types=1);
 
-namespace Tgc\WordPressPsr;
+namespace WordPressPsr;
 
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use RuntimeException;
 use Slim\App;
-use Tgc\WordPressPsr\Psr17\Psr17Factory;
-use Tgc\WordPressPsr\Psr17\Psr17FactoryProvider;
-use Tgc\WordPressPsr\Psr17\SlimHttpPsr17Factory;
-use Tgc\WordPressPsr\CallableResolverInterface;
-use Tgc\WordPressPsr\MiddlewareDispatcherInterface;
-use Tgc\WordPressPsr\Psr17FactoryProviderInterface;
-use Tgc\WordPressPsr\RouteCollectorInterface;
-use Tgc\WordPressPsr\RouteResolverInterface;
+use WordPressPsr\Psr17\Psr17Factory;
+use WordPressPsr\Psr17\Psr17FactoryProvider;
+use WordPressPsr\Psr17\SlimHttpPsr17Factory;
+use WordPressPsr\CallableResolverInterface;
+use WordPressPsr\MiddlewareDispatcherInterface;
+use WordPressPsr\Psr17FactoryProviderInterface;
+use WordPressPsr\RouteCollectorInterface;
+use WordPressPsr\RouteResolverInterface;
 
 class AppFactory
 {

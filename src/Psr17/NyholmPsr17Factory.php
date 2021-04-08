@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Tgc\WordPressPsr\Psr17;
+namespace WordPressPsr\Psr17;
 
-use Tgc\WordPressPsr\Psr17\ServerRequestCreatorInterface;
+use WordPressPsr\Psr17\ServerRequestCreatorInterface;
 
 class NyholmPsr17Factory extends Psr17Factory
 {

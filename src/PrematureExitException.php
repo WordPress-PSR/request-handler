@@ -1,6 +1,6 @@
 <?php
 
-namespace Tgc\WordPressPsr;
+namespace WordPressPsr;
 
 
 class PrematureExitException extends \Exception {

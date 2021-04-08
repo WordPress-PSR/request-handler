@@ -1,6 +1,6 @@
 <?php
-use Tgc\WordPressPsr\Headers;
-use Tgc\WordPressPsr\PrematureExitException;
+use WordPressPsr\Headers;
+use WordPressPsr\PrematureExitException;
 
 /** Set ABSPATH for execution */
 if ( ! defined( 'ABSPATH' ) ) {

@@ -17,7 +17,7 @@
 function wp_get_current_user() {
 	static $did_init = false;
 	if ( false === $did_init ) {
-		\Tgc\WordPressPsr\RequestHandler::after_bootstrap();
+		\WordPressPsr\RequestHandler::after_bootstrap();
 		$did_init = true;
 	}
 	// We can hook into WP::init() because

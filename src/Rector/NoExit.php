@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tgc\WordPressPsr\Rector;
+namespace WordPressPsr\Rector;
 
 use PhpParser\Node;
 use PhpParser\Node\Name;
@@ -24,7 +24,7 @@ die();
 CODE_SAMPLE
 					,
 					<<<'CODE_SAMPLE'
-throw new \Tgc\WordPressPsr\EarlyReturnException();
+throw new \WordPressPsr\EarlyReturnException();
 CODE_SAMPLE
 				),
 

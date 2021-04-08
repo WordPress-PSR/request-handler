@@ -8,7 +8,7 @@
 
 declare(strict_types=1);
 
-namespace Tgc\WordPressPsr\Psr17;
+namespace WordPressPsr\Psr17;
 
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;

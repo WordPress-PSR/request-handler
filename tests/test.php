@@ -1,11 +1,11 @@
 <?php
 
-use Tgc\WordPressPsr\Psr17\Psr17Factory;
-use Tgc\WordPressPsr\Psr17\Psr17FactoryProvider;
+use WordPressPsr\Psr17\Psr17Factory;
+use WordPressPsr\Psr17\Psr17FactoryProvider;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$request_handler = \Tgc\WordPressPsr\RequestHandlerFactory::create( '../wordpress' );
+$request_handler = \WordPressPsr\RequestHandlerFactory::create( '../wordpress' );
 
 $psr17FactoryProvider = new Psr17FactoryProvider();
 

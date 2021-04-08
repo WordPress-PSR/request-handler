@@ -1,13 +1,13 @@
 <?php
 
-namespace Tgc\WordPressPsr;
+namespace WordPressPsr;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
-use Tgc\WordPressPsr\Psr7\SimpleStream;
+use WordPressPsr\Psr7\SimpleStream;
 
 class RequestHandler implements RequestHandlerInterface {
 

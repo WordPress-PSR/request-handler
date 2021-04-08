@@ -8,7 +8,7 @@
 
 declare(strict_types=1);
 
-namespace Tgc\WordPressPsr\Psr17;
+namespace WordPressPsr\Psr17;
 
 class LaminasDiactorosPsr17Factory extends Psr17Factory
 {

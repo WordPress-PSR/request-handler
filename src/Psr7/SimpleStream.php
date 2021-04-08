@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Tgc\WordPressPsr\Psr7;
+namespace WordPressPsr\Psr7;
 
 
 use JetBrains\PhpStorm\Pure;
