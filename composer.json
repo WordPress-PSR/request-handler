@@ -51,7 +51,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Tgc\\WordPressPsr\\": "src/"
+      "WordPressPsr\\": "src/"
     },
     "files": [
       "src/pluggable-functions.php"
@@ -59,7 +59,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "Tgc\\WordPressPsr\\": "tests/"
+      "WordPressPsr\\": "tests/"
     }
   },
   "config": {
