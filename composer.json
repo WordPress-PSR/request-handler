@@ -1,5 +1,5 @@
 {
-  "name": "tgc/wordpres-psr-request-handler",
+  "name": "wordpress-psr/request-handler",
   "type": "library",
   "description": "A PSR-15 server request handler for WordPress.",
   "keywords": [
