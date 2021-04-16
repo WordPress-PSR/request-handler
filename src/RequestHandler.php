@@ -209,6 +209,7 @@ class RequestHandler implements RequestHandlerInterface {
 	 */
 	protected array $wp_special_endpoints = array(
 		'/wp-admin/'                 => '/wp-admin/index.php',
+		'/wp-admin/install.php'      => '/wp-admin/install.php',
 		'/wp-admin/setup-config.php' => '/wp-admin/setup-config.php',
 		'/wp-admin/install.php'      => '/wp-admin/install.php',
 		'/wp-admin/admin-ajax.php'   => '/wp-admin/admin-ajax.php',
