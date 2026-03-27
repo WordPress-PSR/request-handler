@@ -190,11 +190,17 @@ class SimpleStream implements StreamInterface {
 	 *     value is found, or null if the key is not found.
 	 */
 	public function getMetadata($key = null) {
-		return [
-			'seekable' => false,
-            'timed_out' => false,
-            'eof' => false,
+		$metadata = [
+			'seekable'  => false,
+			'timed_out' => false,
+			'eof'       => false,
 		];
+
+		if ($key === null) {
+			return $metadata;
+		}
+
+		return $metadata[$key] ?? null;
 	}
 
 }

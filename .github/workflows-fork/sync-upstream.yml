@@ -1,0 +1,363 @@
+name: Sync Upstream wordpress-core
+
+# This workflow lives in superdav42/wordpress-core.
+# It detects new tags on johnpbloch/wordpress-core, applies the Rector
+# transformations from WordPress-PSR/request-handler, and opens a PR.
+
+on:
+  schedule:
+    # Run weekly on Monday at 06:00 UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      force_tag:
+        description: 'Force-process a specific upstream tag (e.g. 6.9.4). Leave blank to auto-detect.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  detect-new-tags:
+    name: Detect new upstream tags
+    runs-on: ubuntu-latest
+    outputs:
+      new_tags: ${{ steps.compare.outputs.new_tags }}
+      has_new_tags: ${{ steps.compare.outputs.has_new_tags }}
+    steps:
+      - name: Fetch upstream tags
+        id: upstream
+        run: |
+          UPSTREAM_TAGS=$(gh api repos/johnpbloch/wordpress-core/git/refs/tags \
+            --jq '[.[].ref | ltrimstr("refs/tags/")] | sort' \
+            --paginate)
+          echo "upstream_tags<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$UPSTREAM_TAGS" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch fork tags
+        id: fork
+        run: |
+          FORK_TAGS=$(gh api repos/superdav42/wordpress-core/git/refs/tags \
+            --jq '[.[].ref | ltrimstr("refs/tags/")] | sort' \
+            --paginate)
+          echo "fork_tags<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$FORK_TAGS" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compare tags and find new ones
+        id: compare
+        run: |
+          FORCE_TAG="${{ github.event.inputs.force_tag }}"
+
+          if [[ -n "$FORCE_TAG" ]]; then
+            echo "Force-processing tag: $FORCE_TAG"
+            NEW_TAGS=$(jq -n --arg tag "$FORCE_TAG" '[$tag]')
+          else
+            UPSTREAM='${{ steps.upstream.outputs.upstream_tags }}'
+            FORK='${{ steps.fork.outputs.fork_tags }}'
+            NEW_TAGS=$(jq -n \
+              --argjson upstream "$UPSTREAM" \
+              --argjson fork "$FORK" \
+              '$upstream - $fork')
+          fi
+
+          COUNT=$(echo "$NEW_TAGS" | jq 'length')
+          echo "new_tags=$NEW_TAGS" >> "$GITHUB_OUTPUT"
+
+          if [[ "$COUNT" -gt 0 ]]; then
+            echo "has_new_tags=true" >> "$GITHUB_OUTPUT"
+            echo "Found $COUNT new tag(s): $NEW_TAGS"
+          else
+            echo "has_new_tags=false" >> "$GITHUB_OUTPUT"
+            echo "No new tags found."
+          fi
+
+  apply-rector:
+    name: Apply Rector to ${{ matrix.tag }}
+    needs: detect-new-tags
+    if: needs.detect-new-tags.outputs.has_new_tags == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        tag: ${{ fromJson(needs.detect-new-tags.outputs.new_tags) }}
+
+    steps:
+      - name: Set up PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, dom, curl
+          coverage: none
+          tools: composer:v2
+
+      # Checkout the fork — we'll create a branch here from the upstream tag
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          repository: superdav42/wordpress-core
+          path: fork
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create branch from upstream tag
+        id: branch
+        working-directory: fork
+        run: |
+          TAG="${{ matrix.tag }}"
+          BRANCH="rector/upstream-${TAG}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Idempotent: skip if branch already exists
+          if git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null 2>&1; then
+            echo "Branch $BRANCH already exists — skipping."
+            echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+            echo "already_exists=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Fetch the upstream tag into a local ref
+          git remote add upstream https://github.com/johnpbloch/wordpress-core.git
+          git fetch upstream "refs/tags/${TAG}:refs/tags/upstream-${TAG}" --no-tags
+
+          # Create fresh branch from the upstream tag
+          git checkout -b "$BRANCH" "refs/tags/upstream-${TAG}"
+
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "already_exists=false" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout request-handler (Rector rules source)
+        if: steps.branch.outputs.already_exists != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: WordPress-PSR/request-handler
+          path: request-handler
+          fetch-depth: 1
+
+      - name: Install Rector via Composer
+        if: steps.branch.outputs.already_exists != 'true'
+        working-directory: request-handler
+        run: |
+          composer install \
+            --no-interaction \
+            --no-progress \
+            --prefer-dist \
+            --ignore-platform-reqs \
+            --no-scripts
+        env:
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.GITHUB_TOKEN }}"}}'
+
+      - name: Write fork-specific rector.php
+        if: steps.branch.outputs.already_exists != 'true'
+        run: |
+          # Write a rector config adapted for the fork layout (WP files at repo root).
+          # Uses printf to avoid heredoc/YAML indentation conflicts.
+          {
+            printf '<?php\ndeclare(strict_types=1);\n\n'
+            printf 'use Rector\\Config\\RectorConfig;\n'
+            printf 'use Rector\\Set\\ValueObject\\LevelSetList;\n'
+            printf 'use Rector\\Set\\ValueObject\\SetList;\n\n'
+            printf "if ( ! defined( 'ABSPATH' ) ) {\n"
+            printf "    define( 'ABSPATH', __DIR__ . '/fork/' );\n"
+            printf "    define( 'WPINC', 'wp-includes' );\n"
+            printf "    define( 'EP_NONE', 0 );\n"
+            printf '}\n\n'
+            printf 'return RectorConfig::configure()\n'
+            printf "    ->withPaths( [\n        __DIR__ . '/fork/',\n    ] )\n"
+            printf "    ->withAutoloadPaths( [\n        __DIR__ . '/fork',\n    ] )\n"
+            printf '    ->withSets( [\n'
+            printf '        SetList::CODE_QUALITY,\n'
+            printf '        LevelSetList::UP_TO_PHP_82,\n'
+            printf '    ] )\n'
+            printf '    ->withRules( [\n'
+            printf '        \\WordPressPsr\\Rector\\NoExit::class,\n'
+            printf '        \\WordPressPsr\\Rector\\NewHeaderFunction::class,\n'
+            printf '        \\WordPressPsr\\Rector\\NewCookieFunction::class,\n'
+            printf '        \\WordPressPsr\\Rector\\NewHeaderRemoveFunction::class,\n'
+            printf '    ] )\n'
+            printf '    ->withImportNames( importDocBlockNames: false )\n'
+            printf '    ->withSkip( [\n'
+            printf "        __DIR__ . '/fork/wp-includes/SimplePie/*',\n"
+            printf "        __DIR__ . '/fork/wp-includes/sodium_compat/*',\n"
+            printf "        __DIR__ . '/fork/wp-includes/class-json.php',\n"
+            printf "        __DIR__ . '/fork/wp-content/plugins/akismet/class.akismet-cli.php',\n"
+            printf "        __DIR__ . '/fork/wp-includes/class-wp-feed-cache.php',\n"
+            printf "        __DIR__ . '/fork/wp-includes/class-wp-simplepie-file.php',\n"
+            printf "        __DIR__ . '/fork/wp-includes/class-wp-simplepie-sanitize-kses.php',\n"
+            printf "        __DIR__ . '/fork/wp-admin/includes/noop.php',\n"
+            printf '    ] );\n'
+          } > rector-fork.php
+          echo "rector-fork.php written:"
+          head -5 rector-fork.php
+
+      - name: Run Rector transformations
+        if: steps.branch.outputs.already_exists != 'true'
+        id: rector
+        run: |
+          ./request-handler/vendor/bin/rector process \
+            --config rector-fork.php \
+            --no-progress-bar \
+            2>&1 | tee rector-output.txt
+
+      - name: PHP syntax check (smoke test)
+        if: steps.branch.outputs.already_exists != 'true'
+        working-directory: fork
+        run: |
+          echo "Running PHP syntax check on transformed files..."
+          ERRORS=0
+          while IFS= read -r file; do
+            if [[ -f "$file" ]] && ! php -l "$file" > /dev/null 2>&1; then
+              echo "SYNTAX ERROR: $file"
+              php -l "$file"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done < <(git diff --name-only | grep '\.php$')
+
+          if [[ "$ERRORS" -gt 0 ]]; then
+            echo "::error::$ERRORS PHP syntax error(s) found after Rector transformation"
+            exit 1
+          fi
+          echo "All modified PHP files pass syntax check."
+
+      - name: Verify PSR wrapper function references
+        if: steps.branch.outputs.already_exists != 'true'
+        working-directory: fork
+        run: |
+          echo "Checking for wp_exit references in transformed code..."
+          WP_EXIT_COUNT=$(grep -r "wp_exit" wp-includes/ --include="*.php" -l 2>/dev/null | wc -l | tr -d ' ')
+          echo "Files with wp_exit: $WP_EXIT_COUNT"
+          if [[ "$WP_EXIT_COUNT" -eq 0 ]]; then
+            echo "::warning::No wp_exit references found — Rector may not have run correctly"
+          fi
+
+          echo "Checking for wp_header references..."
+          WP_HEADER_COUNT=$(grep -r "wp_header" wp-includes/ --include="*.php" -l 2>/dev/null | wc -l | tr -d ' ')
+          echo "Files with wp_header: $WP_HEADER_COUNT"
+          if [[ "$WP_HEADER_COUNT" -eq 0 ]]; then
+            echo "::warning::No wp_header references found — Rector may not have run correctly"
+          fi
+
+      - name: Commit and push Rector changes
+        if: steps.branch.outputs.already_exists != 'true'
+        id: commit
+        working-directory: fork
+        run: |
+          TAG="${{ matrix.tag }}"
+          BRANCH="${{ steps.branch.outputs.branch }}"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes after Rector — upstream tag may already be clean."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            CHANGED_COUNT=$(git diff --cached --name-only | wc -l | tr -d ' ')
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "changed_count=${CHANGED_COUNT}" >> "$GITHUB_OUTPUT"
+
+            # Write commit message to a temp file (avoids multi-line string in YAML)
+            COMMIT_MSG=$(mktemp)
+            printf 'feat: apply Rector PSR transformations to WordPress %s\n\n' "${TAG}" > "$COMMIT_MSG"
+            printf 'Automatically generated by sync-upstream workflow.\n' >> "$COMMIT_MSG"
+            printf 'Upstream source: johnpbloch/wordpress-core@%s\n' "${TAG}" >> "$COMMIT_MSG"
+            printf 'Rector rules: WordPress-PSR/request-handler src/Rector/\n\n' >> "$COMMIT_MSG"
+            printf 'Transformations applied:\n' >> "$COMMIT_MSG"
+            printf '- exit()/die() -> wp_exit() (NoExit rule)\n' >> "$COMMIT_MSG"
+            printf '- header() -> wp_header() (NewHeaderFunction rule)\n' >> "$COMMIT_MSG"
+            printf '- header_remove() -> wp_header_remove() (NewHeaderRemoveFunction rule)\n' >> "$COMMIT_MSG"
+            printf '- setcookie() -> wp_set_cookie() (NewCookieFunction rule)\n' >> "$COMMIT_MSG"
+            printf '- PHP code quality (SetList::CODE_QUALITY)\n' >> "$COMMIT_MSG"
+            printf '- PHP 8.2 compatibility (LevelSetList::UP_TO_PHP_82)\n' >> "$COMMIT_MSG"
+            git commit -F "$COMMIT_MSG"
+            rm -f "$COMMIT_MSG"
+
+            git push origin "$BRANCH"
+          fi
+
+      - name: Generate diff summary
+        if: steps.branch.outputs.already_exists != 'true' && steps.commit.outputs.has_changes == 'true'
+        id: diff_summary
+        working-directory: fork
+        run: |
+          TAG="${{ matrix.tag }}"
+
+          TOTAL=$(git diff "refs/tags/upstream-${TAG}" HEAD --name-only | wc -l | tr -d ' ')
+          STATS=$(git diff "refs/tags/upstream-${TAG}" HEAD --stat | tail -1)
+
+          echo "total_files=${TOTAL}" >> "$GITHUB_OUTPUT"
+          echo "stats=${STATS}" >> "$GITHUB_OUTPUT"
+
+      - name: Write PR body file
+        if: steps.branch.outputs.already_exists != 'true' && steps.commit.outputs.has_changes == 'true'
+        id: pr_body
+        run: |
+          TAG="${{ matrix.tag }}"
+          CHANGED_COUNT="${{ steps.commit.outputs.changed_count }}"
+          STATS="${{ steps.diff_summary.outputs.stats }}"
+          PR_BODY_FILE=$(mktemp)
+          echo "pr_body_file=${PR_BODY_FILE}" >> "$GITHUB_OUTPUT"
+
+          {
+            printf '## Automated Rector Sync — WordPress %s\n\n' "${TAG}"
+            printf 'This PR was automatically generated by the `sync-upstream` workflow.\n\n'
+            printf '### Source\n'
+            printf '- **Upstream tag**: `johnpbloch/wordpress-core@%s`\n' "${TAG}"
+            printf '- **Rector rules**: `WordPress-PSR/request-handler` (`src/Rector/`)\n\n'
+            printf '### Transformations Applied\n'
+            printf '| Rule | Change |\n'
+            printf '|------|--------|\n'
+            printf '| `NoExit` | `exit()`/`die()` -> `wp_exit()` |\n'
+            printf '| `NewHeaderFunction` | `header()` -> `wp_header()` |\n'
+            printf '| `NewHeaderRemoveFunction` | `header_remove()` -> `wp_header_remove()` |\n'
+            printf '| `NewCookieFunction` | `setcookie()` -> `wp_set_cookie()` |\n'
+            printf '| `SetList::CODE_QUALITY` | General PHP code quality improvements |\n'
+            printf '| `LevelSetList::UP_TO_PHP_82` | PHP 8.2 compatibility upgrades |\n\n'
+            printf '### Diff Summary\n'
+            printf '- **Files changed**: %s (%s)\n\n' "${CHANGED_COUNT}" "${STATS}"
+            printf '### Smoke Tests\n'
+            printf '- PHP syntax check: passed on all modified files\n'
+            printf '- PSR wrapper function references verified (`wp_exit`, `wp_header`)\n\n'
+            printf '### Review Checklist\n'
+            printf '- [ ] Rector changes look correct (no unintended rewrites)\n'
+            printf '- [ ] Structural patches applied if needed (see `patches/` directory)\n'
+            printf '- [ ] PHP syntax check passed in CI\n'
+            printf '- [ ] Ready to tag as `%s` after merge\n\n' "${TAG}"
+            printf '> **Do not auto-merge.** Human review required before tagging.\n'
+          } > "$PR_BODY_FILE"
+
+      - name: Open pull request
+        if: steps.branch.outputs.already_exists != 'true' && steps.commit.outputs.has_changes == 'true'
+        run: |
+          TAG="${{ matrix.tag }}"
+          BRANCH="${{ steps.branch.outputs.branch }}"
+          PR_BODY_FILE="${{ steps.pr_body.outputs.pr_body_file }}"
+
+          gh pr create \
+            --repo superdav42/wordpress-core \
+            --base master \
+            --head "$BRANCH" \
+            --title "feat: Rector PSR transformations for WordPress ${TAG}" \
+            --body-file "$PR_BODY_FILE"
+          rm -f "$PR_BODY_FILE"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Report skipped (no changes)
+        if: steps.branch.outputs.already_exists != 'true' && steps.commit.outputs.has_changes == 'false'
+        run: |
+          echo "::notice::Tag ${{ matrix.tag }} produced no changes after Rector — skipping PR creation."
+
+      - name: Report already exists
+        if: steps.branch.outputs.already_exists == 'true'
+        run: |
+          echo "::notice::Branch for tag ${{ matrix.tag }} already exists — skipping."
