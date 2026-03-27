@@ -40,7 +40,7 @@ class SimpleStream implements StreamInterface {
 	 *
 	 * @return resource|null Underlying PHP stream, if any
 	 */
-	public function detach() {
+	public function detach(): mixed {
 		return null;
 	}
 
@@ -49,7 +49,7 @@ class SimpleStream implements StreamInterface {
 	 *
 	 * @return int|null Returns the size in bytes if known, or null if unknown.
 	 */
-	public function getSize() {
+	public function getSize(): ?int {
 		return $this->length;
 	}
 
@@ -59,7 +59,7 @@ class SimpleStream implements StreamInterface {
 	 * @return int Position of the file pointer
 	 * @throws \RuntimeException on error.
 	 */
-	public function tell() {
+	public function tell(): int {
 		return 0;
 	}
 
@@ -68,7 +68,7 @@ class SimpleStream implements StreamInterface {
 	 *
 	 * @return bool
 	 */
-	public function eof() {
+	public function eof(): bool {
 		return $this->current_location > $this->length;
 	}
 
@@ -77,7 +77,7 @@ class SimpleStream implements StreamInterface {
 	 *
 	 * @return bool
 	 */
-	public function isSeekable() {
+	public function isSeekable(): bool {
 		return false;
 	}
 
@@ -120,7 +120,7 @@ class SimpleStream implements StreamInterface {
 	 *
 	 * @return bool
 	 */
-	public function isWritable() {
+	public function isWritable(): bool {
 		return true;
 	}
 
@@ -142,7 +142,7 @@ class SimpleStream implements StreamInterface {
 	 *
 	 * @return bool
 	 */
-	public function isReadable() {
+	public function isReadable(): bool {
 		return true;
 	}
 
@@ -169,7 +169,7 @@ class SimpleStream implements StreamInterface {
 	 * @throws \RuntimeException if unable to read or an error occurs while
 	 *     reading.
 	 */
-	public function getContents() {
+	public function getContents(): string {
 		if ( $this->current_location ) {
 			return substr( $this->contents, $this->current_location );
 		}
