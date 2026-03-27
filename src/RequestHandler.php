@@ -101,7 +101,9 @@ class RequestHandler implements RequestHandlerInterface {
 
 	/**
 	 * List of admin endpoints and the correct file to perform the request init.
-	 * We are using a map instead of regex for performance reasons and an added security so only php file on this lisk will be included.
+	 * We are using a map instead of regex for performance reasons and an added security so only php file on this list will be included.
+	 * Audited against WordPress 6.9 wp-admin directory. Internal helper files (admin-header.php, menu.php, etc.)
+	 * and deprecated class-include stubs (custom-background.php, custom-header.php) are intentionally excluded.
 	 * @var array|string[]
 	 */
 	protected array $wp_admin_endpoints_to_bootstrap = array(
@@ -109,6 +111,7 @@ class RequestHandler implements RequestHandlerInterface {
 		'/wp-admin/about.php'                  => '/wp-admin/admin.php',
 		'/wp-admin/authorize-application.php'  => '/wp-admin/admin.php',
 		'/wp-admin/comment.php'                => '/wp-admin/admin.php',
+		'/wp-admin/contribute.php'             => '/wp-admin/admin.php', // Added WP 6.x - Get Involved page.
 		'/wp-admin/credits.php'                => '/wp-admin/admin.php',
 		'/wp-admin/customize.php'              => '/wp-admin/admin.php',
 		'/wp-admin/edit-comments.php'          => '/wp-admin/admin.php',
@@ -133,6 +136,7 @@ class RequestHandler implements RequestHandlerInterface {
 		'/wp-admin/ms-upgrade-network.php'     => '/wp-admin/admin.php',
 		'/wp-admin/ms-users.php'               => '/wp-admin/admin.php',
 		'/wp-admin/ms-sites.php'               => '/wp-admin/admin.php',
+		'/wp-admin/my-sites.php'               => '/wp-admin/admin.php', // Added WP 6.x - My Sites dashboard (multisite).
 		'/wp-admin/nav-menus.php'              => '/wp-admin/admin.php',
 		'/wp-admin/network.php'                => '/wp-admin/admin.php',
 		'/wp-admin/options-discussion.php'     => '/wp-admin/admin.php',
@@ -153,6 +157,7 @@ class RequestHandler implements RequestHandlerInterface {
 		'/wp-admin/privacy.php'                => '/wp-admin/admin.php',
 		'/wp-admin/profile.php'                => '/wp-admin/admin.php',
 		'/wp-admin/revision.php'               => '/wp-admin/admin.php',
+		'/wp-admin/site-editor.php'            => '/wp-admin/admin.php', // Added WP 5.9 - Full Site Editing.
 		'/wp-admin/site-health-info.php'       => '/wp-admin/admin.php',
 		'/wp-admin/site-health.php'            => '/wp-admin/admin.php',
 		'/wp-admin/term.php'                   => '/wp-admin/admin.php',
@@ -168,39 +173,41 @@ class RequestHandler implements RequestHandlerInterface {
 		'/wp-admin/users.php'                  => '/wp-admin/admin.php',
 		'/wp-admin/widgets.php'                => '/wp-admin/admin.php',
 		'/wp-admin/user/index.php'             => '/wp-admin/user/admin.php',
-		'/wp-admin/user/privacy.php'           => '/wp-admin/user/admin.php',
-		'/wp-admin/user/credits.php'           => '/wp-admin/user/admin.php',
 		'/wp-admin/user/about.php'             => '/wp-admin/user/admin.php',
-		'/wp-admin/user/profile.php'           => '/wp-admin/user/admin.php',
+		'/wp-admin/user/contribute.php'        => '/wp-admin/user/admin.php', // Added WP 6.x - Get Involved page (user context).
+		'/wp-admin/user/credits.php'           => '/wp-admin/user/admin.php',
 		'/wp-admin/user/freedoms.php'          => '/wp-admin/user/admin.php',
+		'/wp-admin/user/privacy.php'           => '/wp-admin/user/admin.php',
+		'/wp-admin/user/profile.php'           => '/wp-admin/user/admin.php',
 		'/wp-admin/user/user-edit.php'         => '/wp-admin/user/admin.php',
-		'/wp-admin/network/site-new.php'       => '/wp-admin/network/admin.php',
-		'/wp-admin/network/settings.php'       => '/wp-admin/network/admin.php',
-		'/wp-admin/network/theme-install.php'  => '/wp-admin/network/admin.php',
-		'/wp-admin/network/site-users.php'     => '/wp-admin/network/admin.php',
-		'/wp-admin/network/site-settings.php'  => '/wp-admin/network/admin.php',
-		'/wp-admin/network/themes.php'         => '/wp-admin/network/admin.php',
-		'/wp-admin/network/site-themes.php'    => '/wp-admin/network/admin.php',
 		'/wp-admin/network/index.php'          => '/wp-admin/network/admin.php',
-		'/wp-admin/network/privacy.php'        => '/wp-admin/network/admin.php',
-		'/wp-admin/network/update.php'         => '/wp-admin/network/admin.php',
-		'/wp-admin/network/theme-editor.php'   => '/wp-admin/network/admin.php',
-		'/wp-admin/network/plugin-install.php' => '/wp-admin/network/admin.php',
-		'/wp-admin/network/credits.php'        => '/wp-admin/network/admin.php',
-		'/wp-admin/network/site-info.php'      => '/wp-admin/network/admin.php',
-		'/wp-admin/network/edit.php'           => '/wp-admin/network/admin.php',
 		'/wp-admin/network/about.php'          => '/wp-admin/network/admin.php',
-		'/wp-admin/network/upgrade.php'        => '/wp-admin/network/admin.php',
-		'/wp-admin/network/profile.php'        => '/wp-admin/network/admin.php',
+		'/wp-admin/network/contribute.php'     => '/wp-admin/network/admin.php', // Added WP 6.x - Get Involved page (network context).
+		'/wp-admin/network/credits.php'        => '/wp-admin/network/admin.php',
+		'/wp-admin/network/edit.php'           => '/wp-admin/network/admin.php',
 		'/wp-admin/network/freedoms.php'       => '/wp-admin/network/admin.php',
-		'/wp-admin/network/users.php'          => '/wp-admin/network/admin.php',
+		'/wp-admin/network/plugin-editor.php'  => '/wp-admin/network/admin.php',
+		'/wp-admin/network/plugin-install.php' => '/wp-admin/network/admin.php',
+		'/wp-admin/network/plugins.php'        => '/wp-admin/network/admin.php',
+		'/wp-admin/network/privacy.php'        => '/wp-admin/network/admin.php',
+		'/wp-admin/network/profile.php'        => '/wp-admin/network/admin.php',
+		'/wp-admin/network/settings.php'       => '/wp-admin/network/admin.php',
+		'/wp-admin/network/setup.php'          => '/wp-admin/network/admin.php',
+		'/wp-admin/network/site-info.php'      => '/wp-admin/network/admin.php',
+		'/wp-admin/network/site-new.php'       => '/wp-admin/network/admin.php',
+		'/wp-admin/network/site-settings.php'  => '/wp-admin/network/admin.php',
+		'/wp-admin/network/sites.php'          => '/wp-admin/network/admin.php',
+		'/wp-admin/network/site-themes.php'    => '/wp-admin/network/admin.php',
+		'/wp-admin/network/site-users.php'     => '/wp-admin/network/admin.php',
+		'/wp-admin/network/theme-editor.php'   => '/wp-admin/network/admin.php',
+		'/wp-admin/network/theme-install.php'  => '/wp-admin/network/admin.php',
+		'/wp-admin/network/themes.php'         => '/wp-admin/network/admin.php',
+		'/wp-admin/network/update-core.php'    => '/wp-admin/network/admin.php',
+		'/wp-admin/network/update.php'         => '/wp-admin/network/admin.php',
+		'/wp-admin/network/upgrade.php'        => '/wp-admin/network/admin.php',
 		'/wp-admin/network/user-edit.php'      => '/wp-admin/network/admin.php',
 		'/wp-admin/network/user-new.php'       => '/wp-admin/network/admin.php',
-		'/wp-admin/network/sites.php'          => '/wp-admin/network/admin.php',
-		'/wp-admin/network/update-core.php'    => '/wp-admin/network/admin.php',
-		'/wp-admin/network/setup.php'          => '/wp-admin/network/admin.php',
-		'/wp-admin/network/plugin-editor.php'  => '/wp-admin/network/admin.php',
-		'/wp-admin/network/plugins.php'        => '/wp-admin/network/admin.php',
+		'/wp-admin/network/users.php'          => '/wp-admin/network/admin.php',
 	);
 
 	/**
