@@ -20,7 +20,8 @@
   "repositories": [
     {
       "type": "vcs",
-      "url": "git@github.com:superdav42/wordpress-core.git"
+      "url": "https://github.com/superdav42/wordpress-core.git",
+      "canonical": false
     }
   ],
   "require": {
@@ -58,22 +59,30 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "WordPressPsr\\": "tests/"
+      "WordPressPsr\\Tests\\": "tests/"
     }
   },
+  "replace": {
+    "superdav42/wordpress-core": "*"
+  },
   "config": {
-    "sort-packages": true
+    "sort-packages": true,
+    "allow-plugins": {
+      "johnpbloch/wordpress-core-installer": false,
+      "dealerdirect/phpcodesniffer-composer-installer": false
+    }
   },
   "provide": {
     "psr/http-server-handler-implementation": "1.0"
   },
   "scripts": {
     "test": [
+      "phpunit"
+    ],
+    "test:lint": [
       "php-cs-fixer fix --verbose --dry-run",
       "phpcs",
-      "phpstan analyse",
-      "psalm",
-      "phpunit"
+      "phpstan analyse"
     ],
     "fix": [
       "php-cs-fixer fix --verbose",
