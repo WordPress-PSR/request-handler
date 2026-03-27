@@ -48,7 +48,8 @@ jobs:
           composer install \
             --no-interaction \
             --no-progress \
-            --prefer-dist
+            --prefer-dist \
+            --no-scripts
 
       - name: PHP syntax check (lint)
         run: find src -name '*.php' -print0 | xargs -0 php -l
