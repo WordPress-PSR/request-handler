@@ -7,7 +7,7 @@
     <arg name="colors"/>
 
     <!-- Configs -->
-    <config name="minimum_supported_wp_version" value="4.7" />
+    <config name="minimum_supported_wp_version" value="6.0" />
     <config name="testVersion" value="8.1-" />
 
     <!-- Rules -->
