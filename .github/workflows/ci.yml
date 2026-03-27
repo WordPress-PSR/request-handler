@@ -44,6 +44,8 @@ jobs:
             ${{ runner.os }}-php-${{ matrix.php-version }}-composer-
 
       - name: Install dependencies
+        env:
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.GITHUB_TOKEN }}"}}'
         run: |
           composer install \
             --no-interaction \
