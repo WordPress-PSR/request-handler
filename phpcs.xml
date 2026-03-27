@@ -8,7 +8,7 @@
 
     <!-- Configs -->
     <config name="minimum_supported_wp_version" value="4.7" />
-    <config name="testVersion" value="7.2-" />
+    <config name="testVersion" value="8.1-" />
 
     <!-- Rules -->
     <rule ref="WordPress-Core" />
