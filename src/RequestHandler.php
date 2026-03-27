@@ -381,8 +381,11 @@ class RequestHandler implements RequestHandlerInterface {
 		if ( ! $this->bootstrapped ) {
 			return;
 		}
-		// Set vars based on request.
-		require ABSPATH . WPINC . '/vars.php';
+		// Do not re-require vars.php here: it defines functions (e.g. wp_is_mobile) that are
+		// already declared in the persistent worker process from the initial bootstrap, causing
+		// "Cannot redeclare" fatal errors on every subsequent request.
+		// The page-level globals set by vars.php are already unset by clean_up() after each
+		// request, and WordPress re-initialises them during its own load sequence.
 	}
 
 	/**
@@ -439,3 +442,4 @@ class RequestHandler implements RequestHandlerInterface {
 		$this->bootstrapped = true;
 	}
 }
+
