@@ -132,7 +132,11 @@ class Psr17FactoryProviderTest extends TestCase
 
     public function testZendFactoryIsAvailableViaLaminasBridge(): void
     {
-        // laminas/laminas-zendframework-bridge provides Zend namespace aliases
+        // laminas/laminas-zendframework-bridge provides Zend namespace aliases.
+        // The bridge requires PHP ~8.1–8.3; skip when it is not installed.
+        if ( ! class_exists( 'Zend\Diactoros\ServerRequestFactory' ) ) {
+            $this->markTestSkipped( 'laminas/laminas-zendframework-bridge not installed (requires PHP ~8.1–8.3).' );
+        }
         $this->assertTrue(ZendDiactorosPsr17Factory::isServerRequestCreatorAvailable());
     }
 }
