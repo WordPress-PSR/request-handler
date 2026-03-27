@@ -279,7 +279,10 @@ class RequestHandler implements RequestHandlerInterface {
 		add_action(
 			'wp_header',
 			function( $header, $replace = true, $response_code = null ) {
-				Headers::add_header( $header, $replace, $response_code );
+				$headers = Headers::getCurrent();
+				if ( $headers ) {
+					$headers->add_header( $header, $replace, $response_code );
+				}
 			},
 			100,
 			3
@@ -288,14 +291,20 @@ class RequestHandler implements RequestHandlerInterface {
 		add_action(
 			'wp_header_remove',
 			function( $header ) {
-				Headers::remove_header( $header );
+				$headers = Headers::getCurrent();
+				if ( $headers ) {
+					$headers->remove_header( $header );
+				}
 			}
 		);
 
 		add_action(
 			'wp_set_cookie',
 			function( $name, $value = '', $expires_or_options = 0, $path = '', $domain = '', $secure = false, $httponly = false ) {
-				Headers::set_cookie( $name, $value, $expires_or_options, $path, $domain, $secure, $httponly );
+				$headers = Headers::getCurrent();
+				if ( $headers ) {
+					$headers->set_cookie( $name, $value, $expires_or_options, $path, $domain, $secure, $httponly );
+				}
 			},
 			100,
 			7
@@ -308,6 +317,9 @@ class RequestHandler implements RequestHandlerInterface {
 	 * {@inheritdoc}
 	 */
 	public function handle( ServerRequestInterface $request ) : ResponseInterface {
+		$headers_instance = new Headers();
+		Headers::setCurrent( $headers_instance );
+
 		$this->set_globals( $request );
 		ob_start();
 
@@ -321,14 +333,13 @@ class RequestHandler implements RequestHandlerInterface {
 		}
 
 		$content  = ob_get_clean();
-		$headers  = Headers::get_headers();
-		$response = $this->response_factory->createResponse( Headers::get_status_code() )
+		$response = $this->response_factory->createResponse( $headers_instance->get_status_code() )
 			->withBody( new SimpleStream( $content ) );
 
-		foreach ( $headers as $header => $header_value ) {
+		foreach ( $headers_instance->get_headers() as $header => $header_value ) {
 			$response = $response->withHeader( $header, $header_value );
 		}
-		$response = Headers::get_cookies()->renderIntoSetCookieHeader( $response );
+		$response = $headers_instance->get_cookies()->renderIntoSetCookieHeader( $response );
 
 		$this->clean_up();
 		return $response;
@@ -337,7 +348,7 @@ class RequestHandler implements RequestHandlerInterface {
 	protected function clean_up() {
 		global $wp, $wp_actions, $wp_filter, $wp_current_filter;
 
-		Headers::reset();
+		Headers::clearCurrent();
 		if ( function_exists( 'wp_cache_flush' ) ) {
 			wp_cache_flush();
 		}
