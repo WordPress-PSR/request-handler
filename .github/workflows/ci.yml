@@ -47,6 +47,10 @@ jobs:
         env:
           COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.GITHUB_TOKEN }}"}}'
         run: |
+          # Remove the private VCS repository entry — the package's own `replace`
+          # directive already satisfies the superdav42/wordpress-core dependency,
+          # so Composer does not need to authenticate against the private fork.
+          composer config --unset repositories.0
           composer install \
             --no-interaction \
             --no-progress \
