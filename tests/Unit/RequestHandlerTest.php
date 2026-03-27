@@ -32,12 +32,12 @@ class RequestHandlerTest extends TestCase
         $this->responseFactory = $factory;
         $this->streamFactory   = $factory;
 
-        Headers::reset();
+        Headers::clearCurrent();
     }
 
     protected function tearDown(): void
     {
-        Headers::reset();
+        Headers::clearCurrent();
     }
 
     // -------------------------------------------------------------------------

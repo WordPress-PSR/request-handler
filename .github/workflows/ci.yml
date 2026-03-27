@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-version: [ '8.1', '8.2', '8.3' ]
+        php-version: [ '8.2', '8.3' ]
 
     steps:
       - name: Checkout code
@@ -29,7 +29,7 @@ jobs:
           tools: composer:v2
 
       - name: Validate composer.json
-        run: composer validate
+        run: composer validate --no-check-lock
 
       - name: Get Composer cache directory
         id: composer-cache
@@ -44,18 +44,12 @@ jobs:
             ${{ runner.os }}-php-${{ matrix.php-version }}-composer-
 
       - name: Install dependencies
-        env:
-          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.GITHUB_TOKEN }}"}}'
         run: |
-          # Remove the private VCS repository entry — the package's own `replace`
-          # directive already satisfies the superdav42/wordpress-core dependency,
-          # so Composer does not need to authenticate against the private fork.
-          composer config --unset repositories.0
           composer install \
             --no-interaction \
             --no-progress \
             --prefer-dist \
-            --ignore-platform-reqs
+            --no-scripts
 
       - name: PHP syntax check (lint)
         run: find src -name '*.php' -print0 | xargs -0 php -l

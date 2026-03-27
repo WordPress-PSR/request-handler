@@ -29,7 +29,7 @@ class SimpleStream implements StreamInterface {
 	 *
 	 * @return void
 	 */
-	public function close() {
+	public function close(): void {
 		unset( $this->contents );
 	}
 
@@ -40,7 +40,7 @@ class SimpleStream implements StreamInterface {
 	 *
 	 * @return resource|null Underlying PHP stream, if any
 	 */
-	public function detach() {
+	public function detach(): mixed {
 		return null;
 	}
 
@@ -49,7 +49,7 @@ class SimpleStream implements StreamInterface {
 	 *
 	 * @return int|null Returns the size in bytes if known, or null if unknown.
 	 */
-	public function getSize() {
+	public function getSize(): ?int {
 		return $this->length;
 	}
 
@@ -59,7 +59,7 @@ class SimpleStream implements StreamInterface {
 	 * @return int Position of the file pointer
 	 * @throws \RuntimeException on error.
 	 */
-	public function tell() {
+	public function tell(): int {
 		return 0;
 	}
 
@@ -68,7 +68,7 @@ class SimpleStream implements StreamInterface {
 	 *
 	 * @return bool
 	 */
-	public function eof() {
+	public function eof(): bool {
 		return $this->current_location > $this->length;
 	}
 
@@ -77,7 +77,7 @@ class SimpleStream implements StreamInterface {
 	 *
 	 * @return bool
 	 */
-	public function isSeekable() {
+	public function isSeekable(): bool {
 		return false;
 	}
 
@@ -93,7 +93,7 @@ class SimpleStream implements StreamInterface {
 	 *     SEEK_END: Set position to end-of-stream plus offset.
 	 * @throws \RuntimeException on failure.
 	 */
-	public function seek($offset, $whence = SEEK_SET) {
+	public function seek( int $offset, int $whence = SEEK_SET ): void {
 		if ( SEEK_CUR === $whence ) {
 			$this->current_location += $offset;
 		} else {
@@ -111,7 +111,7 @@ class SimpleStream implements StreamInterface {
 	 * @link http://www.php.net/manual/en/function.fseek.php
 	 * @throws \RuntimeException on failure.
 	 */
-	public function rewind() {
+	public function rewind(): void {
 		$this->current_location = 0;
 	}
 
@@ -120,7 +120,7 @@ class SimpleStream implements StreamInterface {
 	 *
 	 * @return bool
 	 */
-	public function isWritable() {
+	public function isWritable(): bool {
 		return true;
 	}
 
@@ -131,10 +131,10 @@ class SimpleStream implements StreamInterface {
 	 * @return int Returns the number of bytes written to the stream.
 	 * @throws \RuntimeException on failure.
 	 */
-	public function write($string) {
+	public function write( string $string ): int {
 		$this->contents .= $string;
-		$this->length += strlen($string);
-		return strlen($string);
+		$this->length += strlen( $string );
+		return strlen( $string );
 	}
 
 	/**
@@ -142,7 +142,7 @@ class SimpleStream implements StreamInterface {
 	 *
 	 * @return bool
 	 */
-	public function isReadable() {
+	public function isReadable(): bool {
 		return true;
 	}
 
@@ -156,11 +156,10 @@ class SimpleStream implements StreamInterface {
 	 *     if no bytes are available.
 	 * @throws \RuntimeException if an error occurs.
 	 */
-	public function read( $length ) {
+	public function read( int $length ): string {
 		$start = $this->current_location;
 		$this->current_location += $length;
 		return substr( $this->contents, $start, $length );
-
 	}
 
 	/**
@@ -170,7 +169,7 @@ class SimpleStream implements StreamInterface {
 	 * @throws \RuntimeException if unable to read or an error occurs while
 	 *     reading.
 	 */
-	public function getContents() {
+	public function getContents(): string {
 		if ( $this->current_location ) {
 			return substr( $this->contents, $this->current_location );
 		}
@@ -189,7 +188,7 @@ class SimpleStream implements StreamInterface {
 	 *     provided. Returns a specific key value if a key is provided and the
 	 *     value is found, or null if the key is not found.
 	 */
-	public function getMetadata($key = null) {
+	public function getMetadata( ?string $key = null ): mixed {
 		$metadata = [
 			'seekable'  => false,
 			'timed_out' => false,

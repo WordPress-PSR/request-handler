@@ -7,52 +7,110 @@ use Dflydev\FigCookies\SetCookies;
 
 class Headers {
 
-	static protected array $headers = array();
+	protected array $headers = array();
 
-	static protected int $status_code = 200;
+	protected int $status_code = 200;
 
-	static protected SetCookies $cookies;
+	protected SetCookies $cookies;
 
-	static public function add_header( $header_string, $replace = true, $status_code = 0 ) {
+	/**
+	 * Per-request current instance registry.
+	 *
+	 * In a standard PHP-FPM / sequential Swoole worker this holds a single
+	 * instance.  When Swoole coroutines are enabled each coroutine gets its
+	 * own entry via Swoole\Coroutine::getContext(), so concurrent requests
+	 * within the same worker never share state.
+	 *
+	 * @var Headers|null
+	 */
+	private static ?Headers $current = null;
+
+	// -------------------------------------------------------------------------
+	// Static registry helpers (used by RequestHandler)
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Register $instance as the active Headers for the current request /
+	 * coroutine context.
+	 */
+	public static function setCurrent( Headers $instance ): void {
+		if ( \extension_loaded( 'swoole' ) && \Swoole\Coroutine::getCid() >= 0 ) {
+			$ctx = \Swoole\Coroutine::getContext();
+			$ctx['__wordpress_psr_headers'] = $instance;
+		} else {
+			self::$current = $instance;
+		}
+	}
+
+	/**
+	 * Return the active Headers instance for the current request / coroutine
+	 * context, or null when called outside a request.
+	 */
+	public static function getCurrent(): ?Headers {
+		if ( \extension_loaded( 'swoole' ) && \Swoole\Coroutine::getCid() >= 0 ) {
+			$ctx = \Swoole\Coroutine::getContext();
+			return $ctx['__wordpress_psr_headers'] ?? null;
+		}
+		return self::$current;
+	}
+
+	/**
+	 * Clear the active instance for the current request / coroutine context.
+	 * Called by RequestHandler::clean_up().
+	 */
+	public static function clearCurrent(): void {
+		if ( \extension_loaded( 'swoole' ) && \Swoole\Coroutine::getCid() >= 0 ) {
+			$ctx = \Swoole\Coroutine::getContext();
+			unset( $ctx['__wordpress_psr_headers'] );
+		} else {
+			self::$current = null;
+		}
+	}
+
+	// -------------------------------------------------------------------------
+	// Instance API
+	// -------------------------------------------------------------------------
+
+	public function add_header( $header_string, $replace = true, $status_code = 0 ): void {
 		$header = strstr( $header_string, ':', true );
 		$value  = substr( $header_string, strlen( $header ) + 1 );
 
-		if ( false === $replace && isset( self::$headers[ $header ] ) ) {
+		if ( false === $replace && isset( $this->headers[ $header ] ) ) {
 			return;
 		}
-		if ( 'location' === strtolower( $header ) && 200 === self::$status_code ) {
-			self::$status_code = 302;
+		if ( 'location' === strtolower( $header ) && 200 === $this->status_code ) {
+			$this->status_code = 302;
 		}
 
-		if ( self::validate_header( $header, $value ) ) {
-			self::$headers[ $header ] = $value;
+		if ( $this->validate_header( $header, $value ) ) {
+			$this->headers[ $header ] = $value;
 		}
 		if ( $status_code ) {
-			self::$status_code = $status_code;
+			$this->status_code = $status_code;
 		}
 	}
 
-	static public function remove_header( $header ) {
-		unset( self::$headers[ $header ] );
+	public function remove_header( $header ): void {
+		unset( $this->headers[ $header ] );
 	}
 
-	static public function get_headers(): array {
-		return self::$headers;
+	public function get_headers(): array {
+		return $this->headers;
 	}
 
-	static public function set_status_code( $code ) {
-		self::$status_code = (int) $code;
+	public function set_status_code( $code ): void {
+		$this->status_code = (int) $code;
 	}
 
-	static public function get_status_code(): int {
-		return self::$status_code;
+	public function get_status_code(): int {
+		return $this->status_code;
 	}
 
-	public static function set_cookie( $cookie_name, $value, $expires_or_options = 0, $path = '', $domain = '', $secure = false, $httponly = false ): bool {
-		if ( ! isset( self::$cookies ) ) {
-			self::init_cookies();
+	public function set_cookie( $cookie_name, $value, $expires_or_options = 0, $path = '', $domain = '', $secure = false, $httponly = false ): bool {
+		if ( ! isset( $this->cookies ) ) {
+			$this->init_cookies();
 		}
-		self::$cookies = self::$cookies->with(
+		$this->cookies = $this->cookies->with(
 			SetCookie::create( $cookie_name )
 				->withValue( $value )
 				->withExpires( $expires_or_options )
@@ -64,25 +122,24 @@ class Headers {
 		return true;
 	}
 
-	protected static function init_cookies() {
-		self::$cookies = new SetCookies();
+	protected function init_cookies(): void {
+		$this->cookies = new SetCookies();
 	}
 
-	public static function reset() {
-		self::$cookies     = new SetCookies();
-		self::$headers     = array();
-		self::$status_code = 200;
+	public function reset(): void {
+		$this->cookies     = new SetCookies();
+		$this->headers     = array();
+		$this->status_code = 200;
 	}
 
-	public static function get_cookies(): SetCookies {
-		if ( ! isset( self::$cookies ) ) {
-			self::init_cookies();
+	public function get_cookies(): SetCookies {
+		if ( ! isset( $this->cookies ) ) {
+			$this->init_cookies();
 		}
-		return self::$cookies;
+		return $this->cookies;
 	}
 
-
-	private static function validate_header( $header, $values ): bool {
+	private function validate_header( $header, $values ): bool {
 		if ( ! \is_string( $header ) || 1 !== \preg_match( "@^[!#$%&'*+.^_`|~0-9A-Za-z-]+$@", $header ) ) {
 			return false;
 		}
