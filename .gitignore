@@ -7,3 +7,6 @@ wp-config.php
 composer.lock
 
 .agents/loop-state/
+
+# AI DevOps local config
+.aidevops.json
